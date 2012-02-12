@@ -6,16 +6,33 @@ function createMockLoader() {
 	};
 }
 
-function Project(buildId, name) {
+function BuildInfoLoader(teamcityBaseUrl) {
+	this.teamcityBaseUrl = teamcityBaseUrl;
+	var me = this;
+	this.retrieve = function (buildTypeID, success, failure) {
+		$.ajax({
+			url: me.teamcityBaseUrl + "/guestAuth/app/rest/builds/buildType:" + buildTypeID,
+			accepts: "application/json",
+			dataType: "jsonp",
+			success: function (data) {
+				success(new BuildInfo(buildTypeID, data, null));
+			},
+			error: failure
+		});
+	};
+}
+
+function BuildInfo(buildId, projectName, buildName) {
 	// bt185,bt187
 	//http://teamcity.jetbrains.com/guestAuth/app/rest/builds/buildType:bt187,status:SUCCESS/statistics/CodeCoverageL
 	//http://teamcity.jetbrains.com/guestAuth/app/rest/builds/id:36552/statistics
 	this.buildId = buildId;
-	this.name = name;
+	this.buildName = buildName;
+	this.projectName = projectName;
 }
 
 function createProjects() {
-	return [ new Project("bt19", "My Project"), new Project("bt20", "Another great project"), new Project("bt21", "Proj 3") ];
+	return [ new BuildInfo("bt19", "My Project"), new BuildInfo("bt20", "Another great project"), new BuildInfo("bt21", "Proj 3") ];
 }
 
 function ProjectElement(parentElement, project, totalNumberOfProjects) {
@@ -78,7 +95,7 @@ function CodeUpdater(coverageLoader, elements) {
 	};
 }
 
-function init() {
+function setupLeaderboard() {
 
 	var coverageLoader = createMockLoader();
 	var projects = createProjects(document);
@@ -98,6 +115,4 @@ function log(val) {
 		console.log(new Date().toTimeString() + ": " + val);
 	}
 }
-
-window.onload = init;
 
