@@ -9,15 +9,22 @@ function createMockLoader() {
 function BuildInfoLoader(teamcityBaseUrl) {
 	this.teamcityBaseUrl = teamcityBaseUrl;
 	var me = this;
-	this.retrieve = function (buildTypeID, success, failure) {
+	this.retrieve = function (buildTypeID, successCall, failure) {
+		/*		var jqxhr = $.getJSON(me.teamcityBaseUrl + "/guestAuth/app/rest/builds/buildType:" + buildTypeID + "?&callback=?", function () {
+		 alert("success");
+		 })
+		 .success(function (data) {
+		 success(new BuildInfo(buildTypeID, data, null));
+		 })
+		 .error(failure);
+		 */
 		$.ajax({
-			url: me.teamcityBaseUrl + "/guestAuth/app/rest/builds/buildType:" + buildTypeID,
-			accepts: "application/json",
-			dataType: "jsonp",
-			success: function (data) {
-				success(new BuildInfo(buildTypeID, data, null));
-			},
-			error: failure
+			url:me.teamcityBaseUrl + "/guestAuth/app/rest/builds/buildType:" + buildTypeID,
+			success:function (data) {
+				successCall(new BuildInfo(buildTypeID, data, null));
+			}
+			,
+			error:failure
 		});
 	};
 }
