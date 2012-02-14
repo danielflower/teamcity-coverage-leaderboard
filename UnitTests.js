@@ -1,9 +1,17 @@
 function assertThat(bool, message) {
-	if (!bool) alert(message);
+	if (!bool) {
+		alert(message)
+	} else {
+		console.log("Test passed");
+	}
 }
 
 function assertEquals(expected, actual, message) {
-	if (expected != actual) alert(message + "\nExpected: " + expected + "\nActual: " + actual);
+	if (expected != actual) {
+		alert(message + "\nExpected: " + expected + "\nActual: " + actual);
+	} else {
+		console.log("Test passed with value " + expected);
+	}
 }
 
 function runTests() {
