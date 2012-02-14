@@ -12,18 +12,13 @@ function BuildInfoLoader(teamcityBaseUrl) {
 	this.retrieve = function (buildTypeID, successCall, failure) {
 		var jqxhr = $.getJSON(me.teamcityBaseUrl + "/guestAuth/app/rest/builds/buildType:" + buildTypeID)
 				.success(function (data) {
-					successCall(new BuildInfo(buildTypeID, JSON.stringify(data), null));
+					JSON.stringify(data);
+					successCall(new BuildInfo(buildTypeID, data.buildType.projectName, data.buildType.name));
 				})
 				.error(failure);
-
-		/*	$.ajax({
-		 url:me.teamcityBaseUrl + "/guestAuth/app/rest/builds/buildType:" + buildTypeID,
-		 success:function (data) {
-		 successCall(new BuildInfo(buildTypeID, data, null));
-		 }
-		 ,
-		 error:failure
-		 });*/
+/* Sample JSON:
+ {"id":3,"number":"3","status":"SUCCESS","href":"/guestAuth/app/rest/builds/id:3","webUrl":"http://localhost:7000/viewLog.html?buildId=3&buildTypeId=bt2","personal":false,"history":false,"pinned":false,"statusText":"Success","buildType":{"id":"bt2","name":"CI Build","href":"/guestAuth/app/rest/buildTypes/id:bt2","projectName":"teamcity-coverage-leaderboard","projectId":"project2","webUrl":"http://localhost:7000/viewType.html?buildTypeId=bt2"},"startDate":"20120214T211744+0800","finishDate":"20120214T211745+0800","agent":{"name":"DanielPC","id":1,"href":"/guestAuth/app/rest/agents/id:1"},"tags":null,"properties":null,"revisions":{"revision":[{"display-version":"95b79f0f4dc9017d1d4f61f6ada234c6ed54d023","vcs-root":{"href":"/guestAuth/app/rest/vcs-roots/id:1","name":"teamcity-coverage-leaderboard-git"}}]},"changes":{"href":"/guestAuth/app/rest/changes?build=id:3","count":1},"relatedIssues":null}
+ */
 	};
 }
 
