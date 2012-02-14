@@ -10,22 +10,20 @@ function BuildInfoLoader(teamcityBaseUrl) {
 	this.teamcityBaseUrl = teamcityBaseUrl;
 	var me = this;
 	this.retrieve = function (buildTypeID, successCall, failure) {
-		/*		var jqxhr = $.getJSON(me.teamcityBaseUrl + "/guestAuth/app/rest/builds/buildType:" + buildTypeID + "?&callback=?", function () {
-		 alert("success");
-		 })
-		 .success(function (data) {
-		 success(new BuildInfo(buildTypeID, data, null));
-		 })
-		 .error(failure);
-		 */
-		$.ajax({
-			url:me.teamcityBaseUrl + "/guestAuth/app/rest/builds/buildType:" + buildTypeID,
-			success:function (data) {
-				successCall(new BuildInfo(buildTypeID, data, null));
-			}
-			,
-			error:failure
-		});
+		var jqxhr = $.getJSON(me.teamcityBaseUrl + "/guestAuth/app/rest/builds/buildType:" + buildTypeID)
+				.success(function (data) {
+					successCall(new BuildInfo(buildTypeID, JSON.stringify(data), null));
+				})
+				.error(failure);
+
+		/*	$.ajax({
+		 url:me.teamcityBaseUrl + "/guestAuth/app/rest/builds/buildType:" + buildTypeID,
+		 success:function (data) {
+		 successCall(new BuildInfo(buildTypeID, data, null));
+		 }
+		 ,
+		 error:failure
+		 });*/
 	};
 }
 
