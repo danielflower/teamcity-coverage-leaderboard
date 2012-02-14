@@ -12,7 +12,7 @@ function BuildInfoLoader(teamcityBaseUrl) {
 	this.retrieve = function (buildTypeID, successCall, failure) {
 		var jqxhr = $.getJSON(me.teamcityBaseUrl + "/guestAuth/app/rest/builds/buildType:" + buildTypeID)
 				.success(function (data) {
-					JSON.stringify(data);
+					console.log(JSON.stringify(data));
 					successCall(new BuildInfo(buildTypeID, data.buildType.projectName, data.buildType.name));
 				})
 				.error(failure);
