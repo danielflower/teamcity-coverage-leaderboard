@@ -1,8 +1,20 @@
 function createMockLoader() {
 	return {
-		getCoverage:function (buildId) {
-			return 100 * Math.random();
+		getStats:function (buildId, successCallback, errorCallback) {
+			var callback = function () {
+				successCallback({ coveragePercent:Math.floor(100 * Math.random()) });
+			};
+			window.setTimeout(callback, 500);
 		}
+	};
+}
+
+function MockBuildInfoLoader() {
+	this.retrieve = function (buildTypeID, successCall, failure) {
+		var callback = function () {
+			successCall(new BuildInfo(buildTypeID, "Project " + Math.floor(100 * Math.random()), "CI Build"))
+		};
+		window.setTimeout(callback, 500);
 	};
 }
 
@@ -16,9 +28,9 @@ function BuildInfoLoader(teamcityBaseUrl) {
 					successCall(new BuildInfo(buildTypeID, data.buildType.projectName, data.buildType.name));
 				})
 				.error(failure);
-/* Sample JSON:
- {"id":3,"number":"3","status":"SUCCESS","href":"/guestAuth/app/rest/builds/id:3","webUrl":"http://localhost:7000/viewLog.html?buildId=3&buildTypeId=bt2","personal":false,"history":false,"pinned":false,"statusText":"Success","buildType":{"id":"bt2","name":"CI Build","href":"/guestAuth/app/rest/buildTypes/id:bt2","projectName":"teamcity-coverage-leaderboard","projectId":"project2","webUrl":"http://localhost:7000/viewType.html?buildTypeId=bt2"},"startDate":"20120214T211744+0800","finishDate":"20120214T211745+0800","agent":{"name":"DanielPC","id":1,"href":"/guestAuth/app/rest/agents/id:1"},"tags":null,"properties":null,"revisions":{"revision":[{"display-version":"95b79f0f4dc9017d1d4f61f6ada234c6ed54d023","vcs-root":{"href":"/guestAuth/app/rest/vcs-roots/id:1","name":"teamcity-coverage-leaderboard-git"}}]},"changes":{"href":"/guestAuth/app/rest/changes?build=id:3","count":1},"relatedIssues":null}
- */
+		/* Sample JSON:
+		 {"id":3,"number":"3","status":"SUCCESS","href":"/guestAuth/app/rest/builds/id:3","webUrl":"http://localhost:7000/viewLog.html?buildId=3&buildTypeId=bt2","personal":false,"history":false,"pinned":false,"statusText":"Success","buildType":{"id":"bt2","name":"CI Build","href":"/guestAuth/app/rest/buildTypes/id:bt2","projectName":"teamcity-coverage-leaderboard","projectId":"project2","webUrl":"http://localhost:7000/viewType.html?buildTypeId=bt2"},"startDate":"20120214T211744+0800","finishDate":"20120214T211745+0800","agent":{"name":"DanielPC","id":1,"href":"/guestAuth/app/rest/agents/id:1"},"tags":null,"properties":null,"revisions":{"revision":[{"display-version":"95b79f0f4dc9017d1d4f61f6ada234c6ed54d023","vcs-root":{"href":"/guestAuth/app/rest/vcs-roots/id:1","name":"teamcity-coverage-leaderboard-git"}}]},"changes":{"href":"/guestAuth/app/rest/changes?build=id:3","count":1},"relatedIssues":null}
+		 */
 	};
 }
 
@@ -37,18 +49,21 @@ function createProjects() {
 
 function ProjectElement(parentElement, project, totalNumberOfProjects) {
 	this.project = project;
+	this.totalNumberOfProjects = totalNumberOfProjects;
 	this.container = document.createElement("div");
 	this.innerBox = document.createElement("div");
 	this.name = document.createElement("span");
 	this.percent = document.createElement("span");
 	this.bar = document.createElement("div");
 	this.container.className = 'ProjectBox';
-	var barHeightPercentage = parseInt(100.0 / totalNumberOfProjects) + '%';
+	var barHeightPercentage = (100.0 / totalNumberOfProjects) + '%';
 	this.container.style.height = barHeightPercentage;
 	this.innerBox.className = 'ProjectInnerBox';
 	this.name.className = 'ProjectName';
 	this.percent.className = 'PercentageText';
 	this.bar.className = 'PercentageBar';
+	this.stats = null;
+	this.rank = -1;
 
 	this.bar.appendChild(this.name);
 	this.bar.appendChild(this.percent);
@@ -56,10 +71,12 @@ function ProjectElement(parentElement, project, totalNumberOfProjects) {
 	this.container.appendChild(this.innerBox);
 	parentElement.appendChild(this.container);
 
-	this.name.innerHTML = project.name;
+	this.name.innerHTML = project.projectName;
 
 	var me = this;
-	this.updatePercentage = function (newValue) {
+	this.updatePercentage = function (newStats) {
+		me.stats = newStats;
+		var newValue = newStats.coveragePercent;
 		var ceilingValue = Math.ceil(newValue);
 		var backgroundColor = me.convertToColour(newValue);
 		log("Updating " + me.project.buildId + " to " + ceilingValue + "% (" + backgroundColor + ")");
@@ -67,6 +84,15 @@ function ProjectElement(parentElement, project, totalNumberOfProjects) {
 		me.bar.style.backgroundColor = backgroundColor;
 		me.percent.innerHTML = ceilingValue + "%";
 	};
+
+	this.setRank = function (zeroIndexedRanking) {
+		if (me.rank != zeroIndexedRanking) {
+			me.rank = zeroIndexedRanking;
+			var newY = Math.floor((zeroIndexedRanking / me.totalNumberOfProjects) * 100);
+			$(me.container).animate({ top:newY + "%" });
+		}
+	};
+
 
 	this.convertToColour = function (numericalValue) {
 		var proportion = (numericalValue / 100.0);
@@ -95,19 +121,77 @@ function CodeUpdater(coverageLoader, elements) {
 	};
 }
 
-function setupLeaderboard() {
+function BuildCoordinator(container, totalNumberOfProjects, statsLoader) {
+	var me = this;
+	this.statsLoader = statsLoader;
+	this.container = container;
+	this.builds = [];
+	this.totalNumberOfProjects = totalNumberOfProjects;
 
-	var coverageLoader = createMockLoader();
-	var projects = createProjects(document);
-	var container = document.getElementById("projectContainer");
-	var elements = [];
-	for (var i = 0; i < projects.length; i++) {
-		var project = projects[i];
-		elements.push(new ProjectElement(container, project, projects.length));
+	this.start = function (buildInfoLoader, projectIds) {
+		for (var i = 0; i < projectIds.length; i++) {
+			var id = projectIds[i];
+			buildInfoLoader.retrieve(
+					id, me.addBuild, function (jqXHR, textStatus, errorThrown) {
+						log("Error getting " + id + ": " + textStatus + " " + errorThrown + "; will retry.");
+						window.setTimeout(function () {
+							me.start(buildInfoLoader, [ id ])
+						}, 10000);
+					});
+		}
 	}
 
-	var updater = new CodeUpdater(coverageLoader, elements);
-	updater.start();
+	this.addBuild = function (buildInfo) {
+		var pe = new ProjectElement(me.container, buildInfo, me.totalNumberOfProjects);
+		pe.setRank(me.builds.length);
+		me.watchProject(pe);
+		me.builds.push(pe);
+	};
+
+	this.updateStats = function (projectElement, newStats) {
+		projectElement.updatePercentage(newStats);
+		me.builds.sort(function (a, b) {
+			if (a.stats && !b.stats) return 1;
+			if (b.stats && !a.stats) return -1;
+			if (!a.stats && !b.stats) return 0;
+			return b.stats.coveragePercent - a.stats.coveragePercent
+		});
+		for (var rank = 0; rank < me.builds.length; rank++) {
+			me.builds[rank].setRank(rank);
+		}
+	};
+
+	this.watchProject = function (projectElement) {
+		me.statsLoader.getStats(projectElement.project.buildId,
+				function (stats) {
+					me.updateStats(projectElement, stats);
+					window.setTimeout(function () {
+						me.watchProject(projectElement)
+					}, 5000);
+				},
+				function (a, b, c) {
+					window.setTimeout(function () {
+						me.watchProject(projectElement)
+					}, 5000);
+				}
+		);
+	};
+
+}
+
+function setupLeaderboard() {
+
+	var statsLoader = createMockLoader();
+	var buildInfoLoader = new MockBuildInfoLoader();
+	var projectIds = [ "bt2", "bt3", "bt4" ];
+	var container = document.getElementById("projectContainer");
+
+	var buildCoordinator = new BuildCoordinator(container, projectIds.length, statsLoader);
+	buildCoordinator.start(buildInfoLoader, projectIds);
+
+
+	//var updater = new CodeUpdater(coverageLoader, elements);
+	//updater.start();
 }
 
 function log(val) {
