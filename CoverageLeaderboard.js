@@ -18,16 +18,52 @@ function MockBuildInfoLoader() {
 	};
 }
 
-function BuildStatisticsLoader (teamcityBaseUrl) {
+function BuildStatistics(buildTypeId, statisticsMap) {
+	this.buildTypeId = buildTypeId;
+	this.statisticsMap = statisticsMap;
+	var me = this;
+	this.coveragePercent = statisticsMap["CodeCoverageL"];
+	/*
+	 Sample map:
+	 <property name="ArtifactsSize" value="88830"/>
+	 <property name="BuildArtifactsPublishingTime" value="43"/>
+	 <property name="BuildCheckoutTime" value="15047"/>
+	 <property name="BuildTestStatus" value="1"/>
+	 <property name="CodeCoverageAbsCCovered" value="17.0"/>
+	 <property name="CodeCoverageAbsCTotal" value="21.0"/>
+	 <property name="CodeCoverageAbsLCovered" value="256.0"/>
+	 <property name="CodeCoverageAbsLTotal" value="464.0"/>
+	 <property name="CodeCoverageAbsMCovered" value="76.0"/>
+	 <property name="CodeCoverageAbsMTotal" value="94.0"/>
+	 <property name="CodeCoverageC" value="80.952385"/>
+	 <property name="CodeCoverageL" value="55.172413"/>
+	 <property name="CodeCoverageM" value="80.85107"/>
+	 <property name="PassedTestCount" value="25"/>
+	 <property name="SuccessRate" value="1"/>
+	 <property name="TimeSpentInQueue" value="15"/>
+	 */
+	this.get = function (key, defaultValue) {
+		var v = me.statisticsMap[key];
+		return v || defaultValue;
+	};
+}
+
+function BuildStatisticsLoader(teamcityBaseUrl) {
 	var me = this;
 	this.teamcityBaseUrl = teamcityBaseUrl;
 	this.getStats = function (buildId, successCallback, errorCallback) {
 		$.getJSON(me.teamcityBaseUrl + "/guestAuth/app/rest/builds/buildType:" + buildId + ",status:SUCCESS/statistics")
-				.success(function (data) {
-					console.log(JSON.stringify(data));
-					successCallback({ coveragePercent:Math.floor(100 * Math.random()) });
-				});
-	}
+				.success(function (map) {
+					//console.log(JSON.stringify(map));
+					successCallback(new BuildStatistics(buildId, map));
+				})
+				.error(errorCallback);
+	};
+
+	// Sample map: no tests:
+	// {"property":[{"@name":"ArtifactsSize","@value":"114424"},{"@name":"BuildArtifactsPublishingTime","@value":"78"},{"@name":"BuildCheckoutTime","@value":"35"},{"@name":"BuildTestStatus","@value":"1"},{"@name":"SuccessRate","@value":"1"},{"@name":"TimeSpentInQueue","@value":"15"}]}
+	// Sample map: with tests:
+	// {"property":[{"@name":"ArtifactsSize","@value":"88830"},{"@name":"BuildArtifactsPublishingTime","@value":"43"},{"@name":"BuildCheckoutTime","@value":"15047"},{"@name":"BuildTestStatus","@value":"1"},{"@name":"CodeCoverageAbsCCovered","@value":"17.0"},{"@name":"CodeCoverageAbsCTotal","@value":"21.0"},{"@name":"CodeCoverageAbsLCovered","@value":"256.0"},{"@name":"CodeCoverageAbsLTotal","@value":"464.0"},{"@name":"CodeCoverageAbsMCovered","@value":"76.0"},{"@name":"CodeCoverageAbsMTotal","@value":"94.0"},{"@name":"CodeCoverageC","@value":"80.952385"},{"@name":"CodeCoverageL","@value":"55.172413"},{"@name":"CodeCoverageM","@value":"80.85107"},{"@name":"PassedTestCount","@value":"25"},{"@name":"SuccessRate","@value":"1"},{"@name":"TimeSpentInQueue","@value":"15"}]}
 }
 
 function BuildInfoLoader(teamcityBaseUrl) {
