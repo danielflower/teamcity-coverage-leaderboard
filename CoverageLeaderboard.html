@@ -20,8 +20,7 @@
 					setupMockLeaderboard(containerElement);
 				} else {
 					var teamcityUrl = url.param("teamcityBaseUrl") || window.location.origin || window.location.protocol+"//"+window.location.host;
-					var buildTypeIdsVal = url.param("buildTypeIds");
-					var buildTypeIds = (buildTypeIdsVal.split(",") || "").trim();
+					var buildTypeIds = url.param("buildTypeIds");
 					if (buildTypeIds) {
 						log("Starting leaderboard for " + teamcityUrl + " with build types " + buildTypeIds);
 						setupLeaderboard(containerElement, teamcityUrl, buildTypeIds.split(","));
