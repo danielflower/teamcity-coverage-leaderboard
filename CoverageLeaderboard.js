@@ -53,8 +53,14 @@ function BuildStatisticsLoader(teamcityBaseUrl) {
 	this.teamcityBaseUrl = teamcityBaseUrl;
 	this.getStats = function (buildId, successCallback, errorCallback) {
 		$.getJSON(me.teamcityBaseUrl + "/guestAuth/app/rest/builds/buildType:" + buildId + ",status:SUCCESS/statistics")
-				.success(function (map) {
+				.success(function (teamcityStatsArray) {
 					//console.log(JSON.stringify(map));
+					var map = {};
+					var a = teamcityStatsArray.property;
+					for (var i = 0; i < a.length; i++) {
+						var pair = a[i];
+						map[pair["@name"]] = pair["@value"];
+					}
 					successCallback(new BuildStatistics(buildId, map));
 				})
 				.error(errorCallback);
