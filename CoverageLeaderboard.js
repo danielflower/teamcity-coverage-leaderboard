@@ -1,23 +1,3 @@
-function createMockLoader() {
-	return {
-		getStats:function (buildId, successCallback, errorCallback) {
-			var callback = function () {
-				successCallback({ coveragePercent:Math.floor(100 * Math.random()) });
-			};
-			window.setTimeout(callback, 500);
-		}
-	};
-}
-
-function MockBuildInfoLoader() {
-	this.retrieve = function (buildTypeID, successCall, failure) {
-		var callback = function () {
-			successCall(new BuildInfo(buildTypeID, "Project " + Math.floor(100 * Math.random()), "CI Build"))
-		};
-		window.setTimeout(callback, 500);
-	};
-}
-
 function BuildStatistics(buildTypeId, statisticsMap) {
 	this.buildTypeId = buildTypeId;
 	this.statisticsMap = statisticsMap;
@@ -106,8 +86,7 @@ function ProjectElement(parentElement, project, totalNumberOfProjects) {
 	this.percent = document.createElement("span");
 	this.bar = document.createElement("div");
 	this.container.className = 'ProjectBox';
-	var barHeightPercentage = (100.0 / totalNumberOfProjects) + '%';
-	this.container.style.height = barHeightPercentage;
+	this.container.style.height = (100.0 / totalNumberOfProjects) + '%';
 	this.innerBox.className = 'ProjectInnerBox';
 	this.name.className = 'ProjectName';
 	this.percent.className = 'PercentageText';
@@ -157,20 +136,6 @@ function ProjectElement(parentElement, project, totalNumberOfProjects) {
 	};
 }
 
-function CodeUpdater(coverageLoader, elements) {
-	var me = this;
-	this.start = function () {
-		for (var i = 0; i < elements.length; i++) {
-			var element = elements[i];
-			var project = element.project;
-			var percent = coverageLoader.getCoverage(project.buildId);
-			element.updatePercentage(percent);
-		}
-
-		window.setTimeout(me.start, 10000);
-	};
-}
-
 function BuildCoordinator(container, totalNumberOfProjects, statsLoader) {
 	var me = this;
 	this.statsLoader = statsLoader;
@@ -189,7 +154,7 @@ function BuildCoordinator(container, totalNumberOfProjects, statsLoader) {
 						}, 10000);
 					});
 		}
-	}
+	};
 
 	this.addBuild = function (buildInfo) {
 		var pe = new ProjectElement(me.container, buildInfo, me.totalNumberOfProjects);
@@ -219,7 +184,9 @@ function BuildCoordinator(container, totalNumberOfProjects, statsLoader) {
 						me.watchProject(projectElement)
 					}, 5000);
 				},
-				function (a, b, c) {
+				function (jqXHR, textStatus, errorThrown) {
+					log("Error getting stats for " + projectElement.project.projectName + "; will retry. Error: " + JSON.stringify(jqXHR) + " / " +
+							textStatus + " / " + JSON.stringify(errorThrown));
 					window.setTimeout(function () {
 						me.watchProject(projectElement)
 					}, 5000);
@@ -229,19 +196,11 @@ function BuildCoordinator(container, totalNumberOfProjects, statsLoader) {
 
 }
 
-function setupLeaderboard() {
-
-	var statsLoader = createMockLoader();
-	var buildInfoLoader = new MockBuildInfoLoader();
-	var projectIds = [ "bt2", "bt3", "bt4" ];
-	var container = document.getElementById("projectContainer");
-
-	var buildCoordinator = new BuildCoordinator(container, projectIds.length, statsLoader);
-	buildCoordinator.start(buildInfoLoader, projectIds);
-
-
-	//var updater = new CodeUpdater(coverageLoader, elements);
-	//updater.start();
+function setupLeaderboard(containerElement, teamcityUrl, buildTypeIds) {
+	var statsLoader = new BuildStatisticsLoader(teamcityUrl);
+	var buildInfoLoader = new BuildInfoLoader(teamcityUrl);
+	var buildCoordinator = new BuildCoordinator(containerElement, buildTypeIds.length, statsLoader);
+	buildCoordinator.start(buildInfoLoader, buildTypeIds);
 }
 
 function log(val) {

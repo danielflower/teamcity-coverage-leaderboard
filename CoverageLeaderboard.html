@@ -2,17 +2,34 @@
 <html>
 <head>
 	<title>Code Coverage Leaderboard</title>
-	<link rel="stylesheet" href="CoverageLeaderboard.css" />
+	<link rel="stylesheet" href="CoverageLeaderboard.css"/>
 	<script src="jquery-1.7.1.min.js" type="text/javascript"></script>
 	<script src="jquery.url.js" type="text/javascript"></script>
 	<script src="CoverageLeaderboard.js" type="text/javascript"></script>
 	<script src="IntegrationTests.js" type="text/javascript"></script>
+	<script src="MockedTeamCityTests.js" type="text/javascript"></script>
 	<script type="text/javascript">
 		function bootstrap() {
-			if ($.url().param("test") === "true") {
+			var url = $.url();
+			var test = url.param("test");
+			if (test === "integration") {
 				runTests();
 			} else {
-				setupLeaderboard();
+				var containerElement = document.getElementById("projectContainer");
+				if (test === "mock") {
+					setupMockLeaderboard(containerElement);
+				} else {
+					var teamcityUrl = url.param("teamcityBaseUrl") || window.location.origin || window.location.protocol+"//"+window.location.host;
+					var buildTypeIdsVal = url.param("buildTypeIds");
+					var buildTypeIds = (buildTypeIdsVal.split(",") || "").trim();
+					if (buildTypeIds) {
+						log("Starting leaderboard for " + teamcityUrl + " with build types " + buildTypeIds);
+						setupLeaderboard(containerElement, teamcityUrl, buildTypeIds.split(","));
+					} else {
+						alert("Build IDs not specified.  Please specify a comma-separated " +
+								"list of build type IDs in the buildTypeIds querystring paramater.");
+					}
+				}
 			}
 		}
 
@@ -21,9 +38,9 @@
 </head>
 <body>
 
-	<div id="projectContainer">
+<div id="projectContainer">
 
-	</div>
+</div>
 
 </body>
 </html>
