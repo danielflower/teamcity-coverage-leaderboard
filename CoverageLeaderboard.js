@@ -18,13 +18,23 @@ function MockBuildInfoLoader() {
 	};
 }
 
+function BuildStatisticsLoader (teamcityBaseUrl) {
+	this.getStats = function (buildId, successCallback, errorCallback) {
+		$.getJSON(me.teamcityBaseUrl + "/guestAuth/app/rest/builds/buildType:" + buildId + ",status:SUCCESS/statistics")
+				.success(function (data) {
+					console.log(JSON.stringify(data));
+					successCallback({ coveragePercent:Math.floor(100 * Math.random()) });
+				});
+	}
+}
+
 function BuildInfoLoader(teamcityBaseUrl) {
 	this.teamcityBaseUrl = teamcityBaseUrl;
 	var me = this;
 	this.retrieve = function (buildTypeID, successCall, failure) {
-		var jqxhr = $.getJSON(me.teamcityBaseUrl + "/guestAuth/app/rest/builds/buildType:" + buildTypeID)
+		$.getJSON(me.teamcityBaseUrl + "/guestAuth/app/rest/builds/buildType:" + buildTypeID)
 				.success(function (data) {
-					console.log(JSON.stringify(data));
+//					console.log(JSON.stringify(data));
 					successCall(new BuildInfo(buildTypeID, data.buildType.projectName, data.buildType.name));
 				})
 				.error(failure);
@@ -41,10 +51,6 @@ function BuildInfo(buildId, projectName, buildName) {
 	this.buildId = buildId;
 	this.buildName = buildName;
 	this.projectName = projectName;
-}
-
-function createProjects() {
-	return [ new BuildInfo("bt19", "My Project"), new BuildInfo("bt20", "Another great project"), new BuildInfo("bt21", "Proj 3") ];
 }
 
 function ProjectElement(parentElement, project, totalNumberOfProjects) {
