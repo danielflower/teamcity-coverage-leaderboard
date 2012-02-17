@@ -19,8 +19,8 @@ function assertEquals(currentTest, expected, actual, message) {
 function runTests() {
 
 	testBuildInfoLoader();
-	testStatisticsUpdater();
-
+	testStatisticsUpdaterWithNoTests();
+	testStatisticsUpdaterWithTests();
 
 }
 function testBuildInfoLoader() {
