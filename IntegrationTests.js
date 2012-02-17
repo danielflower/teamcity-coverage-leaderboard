@@ -54,7 +54,7 @@ function testStatisticsUpdaterWithTests() {
 	loader.getStats("bt3", function (stats) {
 		assertEquals(t, "bt3", stats.buildTypeId, "Build type ID");
 		assertEquals(t, 25, stats.get("PassedTestCount", 0), "Number of tests");
-		assertEquals(t, 55, stats.coveragePercent, "Coverage percentage");
+		assertEquals(t, 55, Math.floor(stats.coveragePercent), "Coverage percentage");
 		assertEquals(t, 464, stats.get("CodeCoverageAbsLTotal", 0), "Lines covered");
 	}, function (jqXHR, textStatus, errorThrown) {
 		alert(jqXHR + "\nResponse text: " +  jqXHR.responseText + "\nText status: " + textStatus + "\n" + errorThrown);
