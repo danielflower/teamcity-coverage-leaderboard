@@ -19,6 +19,8 @@ function MockBuildInfoLoader() {
 }
 
 function BuildStatisticsLoader (teamcityBaseUrl) {
+	var me = this;
+	this.teamcityBaseUrl = teamcityBaseUrl;
 	this.getStats = function (buildId, successCallback, errorCallback) {
 		$.getJSON(me.teamcityBaseUrl + "/guestAuth/app/rest/builds/buildType:" + buildId + ",status:SUCCESS/statistics")
 				.success(function (data) {

@@ -1,7 +1,6 @@
 
-var currentTest = "";
 
-function assertThat(bool, message) {
+function assertThat(currentTest, bool, message) {
 	if (!bool) {
 		alert(currentTest + ": " + message)
 	} else {
@@ -9,7 +8,7 @@ function assertThat(bool, message) {
 	}
 }
 
-function assertEquals(expected, actual, message) {
+function assertEquals(currentTest, expected, actual, message) {
 	if (expected != actual) {
 		alert(currentText + ": " + message + "\nExpected: " + expected + "\nActual: " + actual);
 	} else {
@@ -25,24 +24,35 @@ function runTests() {
 
 }
 function testBuildInfoLoader() {
-	currentTest = "BuildInfoLoader";
+	var t = "BuildInfoLoader";
 	var loader = new BuildInfoLoader("http://localhost:7000");
 	loader.retrieve("bt2", function (info) {
-		assertEquals("bt2", info.buildId, "Build ID");
-		assertEquals("teamcity-coverage-leaderboard", info.projectName, "Project name");
-		assertEquals("CI Build", info.buildName, "Build name");
+		assertEquals(t, "bt2", info.buildId, "Build ID");
+		assertEquals(t, "teamcity-coverage-leaderboard", info.projectName, "Project name");
+		assertEquals(t, "CI Build", info.buildName, "Build name");
 	}, function (jqXHR, textStatus, errorThrown) {
 		alert(jqXHR + "\nResponse text: " +  jqXHR.responseText + "\nText status: " + textStatus + "\n" + errorThrown);
-	})
+	});
 }
 
-function testStatisticsUpdater() {
-	currentTest = "StatisticsLoader";
+function testStatisticsUpdaterWithNoTests() {
+	var t = "StatisticsLoaderWithNoTests";
 	var loader = new BuildStatisticsLoader("http://localhost:7000");
 	loader.getStats("bt2", function (stats) {
-		assertThat(!stats.coveragePercent, "Coverage is undefined for this build");
+		assertThat(t, !stats.coveragePercent, "Coverage is undefined for this build");
 	}, function (jqXHR, textStatus, errorThrown) {
 		alert(jqXHR + "\nResponse text: " +  jqXHR.responseText + "\nText status: " + textStatus + "\n" + errorThrown);
-	})
+	});
+
+}
+
+function testStatisticsUpdaterWithTests() {
+	var t = "StatisticsLoaderWithTests";
+	var loader = new BuildStatisticsLoader("http://localhost:7000");
+	loader.getStats("bt3", function (stats) {
+		assertEquals(t, 50, stats.coveragePercent, "Coverage percentage");
+	}, function (jqXHR, textStatus, errorThrown) {
+		alert(jqXHR + "\nResponse text: " +  jqXHR.responseText + "\nText status: " + textStatus + "\n" + errorThrown);
+	});
 
 }
