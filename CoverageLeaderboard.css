@@ -15,9 +15,11 @@ html, body {
 }
 
 .ProjectInnerBox {
+	position: absolute;
+	left: 5%;
+	top: 5%;
 	height: 90%;
 	width: 90%;
-	margin: auto;
 	border: 1px solid black;
 }
 
@@ -29,18 +31,14 @@ html, body {
 }
 
 .ProjectName {
-	margin-top: auto;
-	height: 100%;
 }
 .ProjectStatsSummary {
-	height: 100%;
-	font-size: 10px;
 	padding-left: 40px;
-	line-height: 100%;
 }
 
 .PercentageText {
-	height: 100%;
-	padding-left: 40px;
+	position: absolute;
+	top: 0;
+	right: 0;
 	font-weight: bold;
 }

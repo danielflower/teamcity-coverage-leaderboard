@@ -93,7 +93,7 @@ function ProjectElement(parentElement, project, totalNumberOfProjects, headerFor
 	this.innerBox = document.createElement("div");
 	this.name = document.createElement("span");
 	this.statsSummary = document.createElement("span");
-	this.percent = document.createElement("span");
+	this.percent = document.createElement("div");
 	this.bar = document.createElement("div");
 	this.container.className = 'ProjectBox';
 	this.container.style.height = (100.0 / totalNumberOfProjects) + '%';
@@ -105,9 +105,9 @@ function ProjectElement(parentElement, project, totalNumberOfProjects, headerFor
 	this.stats = null;
 	this.rank = -1;
 
+	this.innerBox.appendChild(this.percent);
 	this.bar.appendChild(this.name);
 	this.bar.appendChild(this.statsSummary);
-	this.bar.appendChild(this.percent);
 	this.innerBox.appendChild(this.bar);
 	this.container.appendChild(this.innerBox);
 	parentElement.appendChild(this.container);
@@ -239,16 +239,19 @@ function BuildCoordinator(container, totalNumberOfProjects, statsLoader, project
 }
 
 function setTextSizes() {
-	$('.ProjectName').css('font-size', $(window).width() + "px");
+	var barHeight = $('.ProjectInnerBox').height();
+	$('.ProjectInnerBox').css('line-height', barHeight + "px");
+	$('.PercentageText').css('font-size', barHeight + "px");
+	$('.ProjectName').css('font-size', (barHeight  / 2) + "px");
 }
 
 function setupLeaderboard(containerElement, teamcityUrl, buildTypeIds, projectNameFormat) {
 	var statsLoader = new BuildStatisticsLoader(teamcityUrl);
 	var buildInfoLoader = new BuildInfoLoader(teamcityUrl);
 	var buildCoordinator = new BuildCoordinator(containerElement, buildTypeIds.length, statsLoader, projectNameFormat);
-	setTextSizes();
-
 	buildCoordinator.start(buildInfoLoader, buildTypeIds);
+
+	window.setTimeout(setTextSizes, 500);
 	window.onresize = setTextSizes;
 }
 

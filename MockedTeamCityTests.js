@@ -4,6 +4,10 @@ function setupMockLeaderboard(containerElement) {
 	var projectIds = [ "bt2", "bt3", "bt4" ];
 	var buildCoordinator = new BuildCoordinator(containerElement, projectIds.length, statsLoader, "%PROJECTNAME% - %BUILDNAME%");
 	buildCoordinator.start(buildInfoLoader, projectIds);
+
+	window.setTimeout(setTextSizes, 500);
+	window.onresize = setTextSizes;
+
 }
 
 function createMockLoader() {
