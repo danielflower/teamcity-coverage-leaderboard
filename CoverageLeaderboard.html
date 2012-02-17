@@ -22,8 +22,10 @@
 					var teamcityUrl = url.param("teamcityBaseUrl") || window.location.origin || window.location.protocol+"//"+window.location.host;
 					var buildTypeIds = url.param("buildTypeIds");
 					if (buildTypeIds) {
-						log("Starting leaderboard for " + teamcityUrl + " with build types " + buildTypeIds);
-						setupLeaderboard(containerElement, teamcityUrl, buildTypeIds.split(","));
+						var projectNameFormat = url.param("projectNameFormat") || "%PROJECTNAME%";
+						log("Starting leaderboard for " + teamcityUrl + " with build types " + buildTypeIds + " and projectNameFormat " + projectNameFormat);
+
+						setupLeaderboard(containerElement, teamcityUrl, buildTypeIds.split(","), projectNameFormat);
 					} else {
 						alert("Build IDs not specified.  Please specify a comma-separated " +
 								"list of build type IDs in the buildTypeIds querystring paramater.");

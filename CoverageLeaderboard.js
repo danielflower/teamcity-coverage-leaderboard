@@ -2,28 +2,37 @@ function BuildStatistics(buildTypeId, statisticsMap) {
 	this.buildTypeId = buildTypeId;
 	this.statisticsMap = statisticsMap;
 	var me = this;
-	this.coveragePercent = statisticsMap["CodeCoverageL"];
-	/*
-	 Sample map:
-	 <property name="ArtifactsSize" value="88830"/>
-	 <property name="BuildArtifactsPublishingTime" value="43"/>
-	 <property name="BuildCheckoutTime" value="15047"/>
-	 <property name="BuildTestStatus" value="1"/>
-	 <property name="CodeCoverageAbsCCovered" value="17.0"/>
-	 <property name="CodeCoverageAbsCTotal" value="21.0"/>
-	 <property name="CodeCoverageAbsLCovered" value="256.0"/>
-	 <property name="CodeCoverageAbsLTotal" value="464.0"/>
-	 <property name="CodeCoverageAbsMCovered" value="76.0"/>
-	 <property name="CodeCoverageAbsMTotal" value="94.0"/>
-	 <property name="CodeCoverageC" value="80.952385"/>
-	 <property name="CodeCoverageL" value="55.172413"/>
-	 <property name="CodeCoverageM" value="80.85107"/>
-	 <property name="PassedTestCount" value="25"/>
-	 <property name="SuccessRate" value="1"/>
-	 <property name="TimeSpentInQueue" value="15"/>
+	this.coveragePercent = parseFloat(statisticsMap["CodeCoverageL"]);
+
+	/**
+	 * Gets a statistics value from the stats map. Sample map:
+	 * <property name="ArtifactsSize" value="88830"/>
+	 * <property name="BuildArtifactsPublishingTime" value="43"/>
+	 * <property name="BuildCheckoutTime" value="15047"/>
+	 * <property name="BuildTestStatus" value="1"/>
+	 * <property name="CodeCoverageAbsCCovered" value="17.0"/>
+	 * <property name="CodeCoverageAbsCTotal" value="21.0"/>
+	 * <property name="CodeCoverageAbsLCovered" value="256.0"/>
+	 * <property name="CodeCoverageAbsLTotal" value="464.0"/>
+	 * <property name="CodeCoverageAbsMCovered" value="76.0"/>
+	 * <property name="CodeCoverageAbsMTotal" value="94.0"/>
+	 * <property name="CodeCoverageC" value="80.952385"/>
+	 * <property name="CodeCoverageL" value="55.172413"/>
+	 * <property name="CodeCoverageM" value="80.85107"/>
+	 * <property name="PassedTestCount" value="25"/>
+	 * <property name="SuccessRate" value="1"/>
+	 * <property name="TimeSpentInQueue" value="15"/>
 	 */
 	this.get = function (key, defaultValue) {
 		var v = me.statisticsMap[key];
+		return v || defaultValue;
+	};
+	this.getInt = function (key, defaultValue) {
+		var v = parseInt(me.statisticsMap[key]);
+		return v || defaultValue;
+	};
+	this.getFloat = function (key, defaultValue) {
+		var v = parseFloat(me.statisticsMap[key]);
 		return v || defaultValue;
 	};
 }
@@ -77,41 +86,52 @@ function BuildInfo(buildId, projectName, buildName) {
 	this.projectName = projectName;
 }
 
-function ProjectElement(parentElement, project, totalNumberOfProjects) {
+function ProjectElement(parentElement, project, totalNumberOfProjects, headerFormat) {
 	this.project = project;
 	this.totalNumberOfProjects = totalNumberOfProjects;
 	this.container = document.createElement("div");
 	this.innerBox = document.createElement("div");
 	this.name = document.createElement("span");
+	this.statsSummary = document.createElement("span");
 	this.percent = document.createElement("span");
 	this.bar = document.createElement("div");
 	this.container.className = 'ProjectBox';
 	this.container.style.height = (100.0 / totalNumberOfProjects) + '%';
 	this.innerBox.className = 'ProjectInnerBox';
 	this.name.className = 'ProjectName';
+	this.statsSummary.className = 'ProjectStatsSummary';
 	this.percent.className = 'PercentageText';
 	this.bar.className = 'PercentageBar';
 	this.stats = null;
 	this.rank = -1;
 
 	this.bar.appendChild(this.name);
+	this.bar.appendChild(this.statsSummary);
 	this.bar.appendChild(this.percent);
 	this.innerBox.appendChild(this.bar);
 	this.container.appendChild(this.innerBox);
 	parentElement.appendChild(this.container);
 
-	this.name.innerHTML = project.projectName;
-
 	var me = this;
+
+	this.name.innerHTML = headerFormat
+			.replace("%PROJECTNAME%", project.projectName)
+			.replace("%BUILDNAME%", project.buildName);
+
 	this.updatePercentage = function (newStats) {
 		me.stats = newStats;
 		var newValue = newStats.coveragePercent;
 		var ceilingValue = Math.ceil(newValue);
 		var backgroundColor = me.convertToColour(newValue);
-		log("Updating " + me.project.buildId + " to " + ceilingValue + "% (" + backgroundColor + ")");
+
+		var summary = newStats.coveragePercent ? newStats.getInt("PassedTestCount", "?") + " tests covering "
+				+ Math.floor(newStats.getInt("CodeCoverageAbsLTotal", 0)) + " lines" : "";
+		me.statsSummary.innerHTML = summary;
+
+		//log("Updating " + me.project.buildId + " to " + ceilingValue + "% (" + backgroundColor + ")");
 		me.bar.style.width = ceilingValue + "%";
 		me.bar.style.backgroundColor = backgroundColor;
-		me.percent.innerHTML = ceilingValue + "%";
+		me.percent.innerHTML = (newValue || newValue === 0.0) ? ceilingValue + "%" : "??";
 	};
 
 	this.setRank = function (zeroIndexedRanking) {
@@ -123,21 +143,43 @@ function ProjectElement(parentElement, project, totalNumberOfProjects) {
 	};
 
 
-	this.convertToColour = function (numericalValue) {
-		var proportion = (numericalValue / 100.0);
-		var green = Math.ceil(Math.pow(proportion, 0.1) * 255.0);
-		var red = Math.ceil(Math.pow(1.0 - proportion, 0.1) * 255.0);
+	this.convertToColour = function (pct) {
+		pct = pct / 100.0;
+		var percentColors = [
+			{ pct: 0.0, color: { r: 0xff, g: 0x00, b: 0 } },
+			{ pct: 0.5, color: { r: 0xff, g: 0xff, b: 0 } },
+			{ pct: 1.0, color: { r: 0x00, g: 0xff, b: 0 } } ];
 
-		green = green.toString(16);
-		red = red.toString(16);
-		if (green.length == 1) green = "0" + green;
-		if (red.length == 1) red = "0" + red;
-		return "#" + red + green + "00";
+		if (!pct) return percentColors[0].color;
+		if (pct > 99) return percentColors[2].color;
+
+		var toHex = function (num) {
+			return num < 10 ? "0" + num.toString(16) : num.toString(16);
+		};
+
+		for (var i = 0; i < percentColors.length; i++) {
+			if (pct < percentColors[i].pct) {
+				var lower = percentColors[i - 1];
+				var upper = percentColors[i];
+				var range = upper.pct - lower.pct;
+				var rangePct = (pct - lower.pct) / range;
+				var pctLower = 1 - rangePct;
+				var pctUpper = rangePct;
+				var color = {
+					r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
+					g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
+					b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper)
+				};
+				return "#" + toHex(color.r) + toHex(color.g) + toHex(color.b);
+			}
+		}
+
 	};
 }
 
-function BuildCoordinator(container, totalNumberOfProjects, statsLoader) {
+function BuildCoordinator(container, totalNumberOfProjects, statsLoader, projectNameFormat) {
 	var me = this;
+	this.projectNameFormat = projectNameFormat;
 	this.statsLoader = statsLoader;
 	this.container = container;
 	this.builds = [];
@@ -157,7 +199,7 @@ function BuildCoordinator(container, totalNumberOfProjects, statsLoader) {
 	};
 
 	this.addBuild = function (buildInfo) {
-		var pe = new ProjectElement(me.container, buildInfo, me.totalNumberOfProjects);
+		var pe = new ProjectElement(me.container, buildInfo, me.totalNumberOfProjects, me.projectNameFormat);
 		pe.setRank(me.builds.length);
 		me.watchProject(pe);
 		me.builds.push(pe);
@@ -182,25 +224,32 @@ function BuildCoordinator(container, totalNumberOfProjects, statsLoader) {
 					me.updateStats(projectElement, stats);
 					window.setTimeout(function () {
 						me.watchProject(projectElement)
-					}, 5000);
+					}, 60000);
 				},
 				function (jqXHR, textStatus, errorThrown) {
 					log("Error getting stats for " + projectElement.project.projectName + "; will retry. Error: " + JSON.stringify(jqXHR) + " / " +
 							textStatus + " / " + JSON.stringify(errorThrown));
 					window.setTimeout(function () {
 						me.watchProject(projectElement)
-					}, 5000);
+					}, 60000);
 				}
 		);
 	};
 
 }
 
-function setupLeaderboard(containerElement, teamcityUrl, buildTypeIds) {
+function setTextSizes() {
+	$('.ProjectName').css('font-size', $(window).width() + "px");
+}
+
+function setupLeaderboard(containerElement, teamcityUrl, buildTypeIds, projectNameFormat) {
 	var statsLoader = new BuildStatisticsLoader(teamcityUrl);
 	var buildInfoLoader = new BuildInfoLoader(teamcityUrl);
-	var buildCoordinator = new BuildCoordinator(containerElement, buildTypeIds.length, statsLoader);
+	var buildCoordinator = new BuildCoordinator(containerElement, buildTypeIds.length, statsLoader, projectNameFormat);
+	setTextSizes();
+
 	buildCoordinator.start(buildInfoLoader, buildTypeIds);
+	window.onresize = setTextSizes;
 }
 
 function log(val) {

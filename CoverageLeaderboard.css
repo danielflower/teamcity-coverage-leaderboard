@@ -18,21 +18,29 @@ html, body {
 	height: 90%;
 	width: 90%;
 	margin: auto;
-	font-size: 3em;
 	border: 1px solid black;
 }
-.ProjectName {
-	height: 100%;
-}
 
-.PercentageText {
-	height: 100%;
-	vertical-align: middle;
-	padding-left: 40px;
-	font-weight: bold;
-}
 .PercentageBar {
 	height: 100%;
 	overflow-x: visible;
 	white-space: nowrap;
+	z-index: -1;
+}
+
+.ProjectName {
+	margin-top: auto;
+	height: 100%;
+}
+.ProjectStatsSummary {
+	height: 100%;
+	font-size: 10px;
+	padding-left: 40px;
+	line-height: 100%;
+}
+
+.PercentageText {
+	height: 100%;
+	padding-left: 40px;
+	font-weight: bold;
 }
