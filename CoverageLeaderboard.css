@@ -1,9 +1,5 @@
 
-html, body {
-	height: 100%; padding: 0; margin: 0;
-}
-
-#projectContainer {
+html, body, #projectContainer {
 	width: 100%; height: 100%; padding: 0; margin: 0;
 }
 
@@ -16,11 +12,12 @@ html, body {
 
 .ProjectInnerBox {
 	position: absolute;
-	left: 5%;
+	left: 2%;
 	top: 5%;
 	height: 90%;
-	width: 90%;
+	width: 96%;
 	border: 1px solid black;
+	background-color: #FFFFFF;
 }
 
 .PercentageBar {
@@ -32,8 +29,12 @@ html, body {
 
 .ProjectName {
 }
+
 .ProjectStatsSummary {
-	padding-left: 40px;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	line-height: 100%;
 }
 
 .PercentageText {

@@ -92,7 +92,7 @@ function ProjectElement(parentElement, project, totalNumberOfProjects, headerFor
 	this.container = document.createElement("div");
 	this.innerBox = document.createElement("div");
 	this.name = document.createElement("span");
-	this.statsSummary = document.createElement("span");
+	this.statsSummary = document.createElement("div");
 	this.percent = document.createElement("div");
 	this.bar = document.createElement("div");
 	this.container.className = 'ProjectBox';
@@ -106,8 +106,8 @@ function ProjectElement(parentElement, project, totalNumberOfProjects, headerFor
 	this.rank = -1;
 
 	this.innerBox.appendChild(this.percent);
+	this.innerBox.appendChild(this.statsSummary);
 	this.bar.appendChild(this.name);
-	this.bar.appendChild(this.statsSummary);
 	this.innerBox.appendChild(this.bar);
 	this.container.appendChild(this.innerBox);
 	parentElement.appendChild(this.container);
@@ -147,7 +147,7 @@ function ProjectElement(parentElement, project, totalNumberOfProjects, headerFor
 		pct = pct / 100.0;
 		var percentColors = [
 			{ pct: 0.0, color: { r: 0xff, g: 0x00, b: 0 } },
-			{ pct: 0.5, color: { r: 0xff, g: 0xff, b: 0 } },
+			{ pct: 0.65, color: { r: 0xff, g: 0xff, b: 0 } },
 			{ pct: 1.0, color: { r: 0x00, g: 0xff, b: 0 } } ];
 
 		if (!pct) return percentColors[0].color;
@@ -241,7 +241,7 @@ function BuildCoordinator(container, totalNumberOfProjects, statsLoader, project
 function setTextSizes() {
 	var barHeight = $('.ProjectInnerBox').height();
 	$('.ProjectInnerBox').css('line-height', barHeight + "px");
-	$('.PercentageText').css('font-size', barHeight + "px");
+	$('.PercentageText').css('font-size', Math.ceil(barHeight * 0.8) + "px");
 	$('.ProjectName').css('font-size', (barHeight  / 2) + "px");
 }
 
